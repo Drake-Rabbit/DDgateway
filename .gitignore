@@ -1,0 +1,61 @@
+# 通用忽略规则
+# 日志文件
+*.log
+*.log.*
+logs/
+logs/*
+
+# 临时文件
+*.tmp
+*.temp
+.DS_Store
+Thumbs.db
+
+#我自己的开发md
+my_dev.md
+
+# 环境变量/配置文件（敏感信息）
+#.env
+#.env.*
+!env.example
+config/local.yml
+config/application-dev.yml
+
+# Java
+target/
+*.class
+*.jar
+*.war
+*.ear
+.idea/
+*.iml
+out/
+gradle/
+.gradle/
+build/
+*.log
+
+# Node.js
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+dist/
+coverage/
+.nuxt/
+
+# IDE 配置（通用）
+.idea/
+.vscode/
+*.swp
+*.swo
+.project
+.classpath
+.settings/
+.claude/
+.trae/
+
+
+# 忽略换行符相关的临时文件
+*.orig
+*.rej

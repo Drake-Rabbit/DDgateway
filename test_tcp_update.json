@@ -1,0 +1,16 @@
+{
+  "id": 1,
+  "service_name": "tcp_echo_server_updated",
+  "service_desc": "TCP echo服务（已更新），增强的负载均衡配置",
+  "port": 8002,
+  "open_auth": 1,
+  "black_list": "10.0.0.1,10.0.0.2",
+  "white_list": "192.168.1.100,192.168.1.101,192.168.1.200",
+  "white_host_name": "example.com,test.com",
+  "clientip_flow_limit": 100,
+  "service_flow_limit": 2000,
+  "round_type": 2,
+  "ip_list": "192.168.1.100:9001,192.168.1.101:9001,192.168.1.102:9001,192.168.1.103:9001",
+  "weight_list": "25,25,25,25",
+  "forbid_list": "10.0.0.10,10.0.0.11"
+}
