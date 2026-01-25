@@ -5,18 +5,18 @@ import "strings"
 // LoadBalance 负载均衡结构体
 type LoadBalance struct {
 	ID                     int64  `gorm:"primary_key" json:"id"`
-	ServiceID              int64  `gorm:"column:service_id" json:"service_id"`
-	CheckMethod            int    `gorm:"column:check_method" json:"check_method"`
-	CheckTimeout           int    `gorm:"column:check_timeout" json:"check_timeout"`
-	CheckInterval          int    `gorm:"column:check_interval" json:"check_interval"`
-	RoundType              int    `gorm:"column:round_type" json:"round_type"`
+	ServiceID              int64  `gorm:"column:service_id" json:"service_id" description:"服务id	"`
+	CheckMethod            int    `gorm:"column:check_method" json:"check_method" description:"检查方法 tcpchk=检测端口是否握手成功	"`
+	CheckTimeout           int    `gorm:"column:check_timeout" json:"check_timeout" description:"check超时时间"`
+	CheckInterval          int    `gorm:"column:check_interval" json:"check_interval" description:"检查间隔, 单位s"`
+	RoundType              int    `gorm:"column:round_type" json:"round_type" description:"轮询方式 round/weight_round/random/ip_hash"`
 	IpList                 string `gorm:"column:ip_list" json:"ip_list"`
-	WeightList             string `gorm:"column:weight_list" json:"weight_list"`
-	ForbidList             string `gorm:"column:forbid_list" json:"forbid_list"`
+	WeightList             string `gorm:"column:weight_list" json:"weight_list" description:"权重列表"`
+	ForbidList             string `gorm:"column:forbid_list" json:"forbid_list" description:"禁用ip列表"`
 	UpstreamConnectTimeout int    `gorm:"column:upstream_connect_timeout" json:"upstream_connect_timeout"`
-	UpstreamHeaderTimeout  int    `gorm:"column:upstream_header_timeout" json:"upstream_header_timeout"`
-	UpstreamIdleTimeout    int    `gorm:"column:upstream_idle_timeout" json:"upstream_idle_timeout"`
-	UpstreamMaxIdle        int    `gorm:"column:upstream_max_idle" json:"upstream_max_idle"`
+	UpstreamHeaderTimeout  int    `gorm:"column:upstream_header_timeout" json:"upstream_header_timeout" description:"下游获取header超时, 单位s"`
+	UpstreamIdleTimeout    int    `gorm:"column:upstream_idle_timeout" json:"upstream_idle_timeout" description:"下游链接最大空闲时间, 单位s"`
+	UpstreamMaxIdle        int    `gorm:"column:upstream_max_idle" json:"upstream_max_idle" description:"下游最大空闲链接数"`
 }
 
 // TableName 设置表名

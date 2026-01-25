@@ -182,23 +182,21 @@ func (s *ServiceService) UpdateHTTPService(input *dto.ServiceUpdateHTTPInput) er
 		return errors.New("IP列表与权重列表数量不一致")
 	}
 
-	// 开始事务
-	tx := models.DB.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-
 	// 获取服务基本信息
 	serviceInfo, err := models.GetServiceById(uint(input.ID))
 	if err != nil {
-		tx.Rollback()
 		return errors.New("服务不存在")
 	}
 
 	serviceDetail, err := models.GetServiceDetailById(serviceInfo.ID)
 	if err != nil {
-		tx.Rollback()
 		return errors.New("该服务详情不存在")
+	}
+
+	// 开始事务
+	tx := models.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
 	}
 
 	// 更新服务信息
@@ -292,54 +290,48 @@ func (s *ServiceService) UpdateTcpService(input *dto.ServiceUpdateTcpInput) erro
 		return errors.New("IP列表与权重列表数量不一致")
 	}
 
-	//2. 开始事务
-	tx := models.DB.Begin()
-	if tx.Error != nil {
-		return tx.Error
-	}
-
-	//3. 获取服务基本信息
+	//2. 获取服务基本信息
 	serviceInfo, err := models.GetServiceById(uint(input.ID))
 	if err != nil {
-		tx.Rollback()
 		return errors.New("服务不存在")
 	}
 
-	//4. 获取服务详情
+	//3. 获取服务详情
 	serviceDetail, err := models.GetServiceDetailById(serviceInfo.ID)
 	if err != nil {
-		tx.Rollback()
 		return errors.New("该服务详情不存在")
 	}
 
-	//5. 检查端口是否变更以及是否被占用
+	//4. 检查端口是否变更以及是否被占用
 	if serviceDetail.TCPRule != nil && serviceDetail.TCPRule.Port != input.Port {
 		// 验证新端口是否被占用 (TCP)
 		var tcpRuleCount int64
-		err = tx.Model(&models.TcpRule{}).Where("port = ? AND service_id != ?", input.Port, input.ID).Count(&tcpRuleCount).Error
+		err = models.DB.Model(&models.TcpRule{}).Where("port = ? AND service_id != ?", input.Port, input.ID).Count(&tcpRuleCount).Error
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 		if tcpRuleCount > 0 {
-			tx.Rollback()
 			return errors.New("TCP端口已被占用")
 		}
 
 		// 验证新端口是否被占用 (GRPC)
 		var grpcRuleCount int64
-		err = tx.Model(&models.GrpcRule{}).Where("port = ? AND service_id != ?", input.Port, input.ID).Count(&grpcRuleCount).Error
+		err = models.DB.Model(&models.GrpcRule{}).Where("port = ? AND service_id != ?", input.Port, input.ID).Count(&grpcRuleCount).Error
 		if err != nil {
-			tx.Rollback()
 			return err
 		}
 		if grpcRuleCount > 0 {
-			tx.Rollback()
 			return errors.New("端口已被GRPC服务占用")
 		}
 	}
 
-	//6. 更新服务信息serviceinfo(服务名和服务描述)
+	//----------开始事务----------------
+	tx := models.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	//5. 更新服务信息serviceinfo(服务名和服务描述)
 	info := serviceDetail.Info
 	info.ServiceDesc = input.ServiceDesc
 	if err := tx.Save(info).Error; err != nil {
@@ -347,13 +339,13 @@ func (s *ServiceService) UpdateTcpService(input *dto.ServiceUpdateTcpInput) erro
 		return err
 	}
 
-	//7. 更新 TCP 规则
+	//6. 更新 TCP 规则
 	var tcpRule *models.TcpRule
 	if serviceDetail.TCPRule != nil {
 		tcpRule = serviceDetail.TCPRule
 	}
 
-	//更新service_tcp_rule(连接的serviceId和此tcp的port端口)
+	//7.更新service_tcp_rule(连接的serviceId和此tcp的port端口)
 	info = serviceDetail.Info
 	tcpRule.ServiceID = int64(info.ID)
 	tcpRule.Port = input.Port
@@ -501,4 +493,197 @@ func (s *ServiceService) CreateTcpService(d *dto.ServiceAddTcpInput) (*models.Se
 	}
 
 	return serviceInfo, nil
+}
+
+func (s *ServiceService) CreateGrpcService(d *dto.ServiceAddGrpcInput) (*models.ServiceInfo, error) {
+	//1.判断服务名是否存在
+	exists, err := models.ServiceNameExists(d.ServiceName)
+	if err != nil {
+		return nil, err
+	}
+	if exists {
+		return nil, errors.New("服务名已存在")
+	}
+
+	//2.验证端口是否被占用 (TCP)
+	var tcpRuleCount int64
+	err = models.DB.Model(&models.TcpRule{}).Where("port = ?", d.Port).Count(&tcpRuleCount).Error
+	if err != nil {
+		return nil, err
+	}
+	if tcpRuleCount > 0 {
+		return nil, errors.New("TCP端口已被占用")
+	}
+
+	//3.验证端口是否被占用 (GRPC)
+	var grpcRuleCount int64
+	err = models.DB.Model(&models.GrpcRule{}).Where("port = ?", d.Port).Count(&grpcRuleCount).Error
+	if err != nil {
+		return nil, err
+	}
+	if grpcRuleCount > 0 {
+		return nil, errors.New("端口已被GRPC服务占用")
+	}
+
+	//4.验证 IP 与权重数量一致
+	ipList := strings.Split(d.IpList, ",")
+	weightList := strings.Split(d.WeightList, ",")
+	if len(ipList) != len(weightList) {
+		return nil, errors.New("IP列表与权重列表数量不一致")
+	}
+
+	//5. 开始事务
+	tx := models.DB.Begin()
+	if tx.Error != nil {
+		return nil, tx.Error
+	}
+
+	//6. 先创建创建服务serviceinfo
+	serviceInfo := &models.ServiceInfo{
+		LoadType:    define.LoadTypeGRPC,
+		ServiceName: d.ServiceName,
+		ServiceDesc: d.ServiceDesc,
+	}
+	if err := tx.Create(serviceInfo).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	//7. 创建 load balance配置
+	loadBalance := &models.LoadBalance{
+		ServiceID:  int64(serviceInfo.ID),
+		RoundType:  d.RoundType,
+		IpList:     d.IpList,
+		WeightList: d.WeightList,
+		ForbidList: d.ForbidList,
+	}
+	if err := tx.Create(loadBalance).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	//8.创建grpc rule
+	grpcRule := &models.GrpcRule{
+		ServiceID:      int64(serviceInfo.ID),
+		Port:           d.Port,
+		HeaderTransfor: d.HeaderTransfor,
+	}
+	if err := tx.Create(grpcRule).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	//9.创建准入规则accessControl
+	accessControl := &models.AccessControl{
+		ServiceID:         int64(serviceInfo.ID),
+		OpenAuth:          d.OpenAuth,
+		BlackList:         d.BlackList,
+		WhiteList:         d.WhiteList,
+		WhiteHostName:     d.WhiteHostName,
+		ClientIPFlowLimit: d.ClientIPFlowLimit,
+		ServiceFlowLimit:  d.ServiceFlowLimit,
+	}
+	if err := tx.Create(accessControl).Error; err != nil {
+		tx.Rollback()
+		return nil, err
+	}
+
+	//10.提交事务
+	if err := tx.Commit().Error; err != nil {
+		return nil, err
+	}
+
+	return serviceInfo, nil
+}
+
+func (s *ServiceService) UpdateGrpcService(input *dto.ServiceUpdateGrpcInput) error {
+	//1.验证 IP 与权重数量一致
+	ipList := strings.Split(input.IpList, ",")
+	weightList := strings.Split(input.WeightList, ",")
+	if len(ipList) != len(weightList) {
+		return errors.New("IP列表与权重列表数量不一致")
+	}
+
+	//2. 获取服务基本信息
+	serviceInfo, err := models.GetServiceById(uint(input.ID))
+	if err != nil {
+		return errors.New("服务不存在")
+	}
+
+	//3. 获取服务详情
+	serviceDetail, err := models.GetServiceDetailById(serviceInfo.ID)
+	if err != nil {
+		return errors.New("该服务详情不存在")
+	}
+
+	//----------开始事务----------------
+	tx := models.DB.Begin()
+	if tx.Error != nil {
+		return tx.Error
+	}
+
+	//4. 更新服务信息serviceinfo(服务名和服务描述)
+	info := serviceDetail.Info
+	info.ServiceDesc = input.ServiceDesc
+	if err := tx.Save(info).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	//5.更新grp_rule
+	var grpcRule *models.GrpcRule
+	if serviceDetail.GRPCRule != nil {
+		grpcRule = serviceDetail.GRPCRule
+	} else {
+		grpcRule = &models.GrpcRule{}
+	}
+
+	grpcRule.ServiceID = int64(info.ID)
+	grpcRule.Port = input.Port
+	grpcRule.HeaderTransfor = input.HeaderTransfor
+	if err := tx.Save(grpcRule).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	//6.更新访问控制access_control
+	var accessControl *models.AccessControl
+	if serviceDetail.AccessControl != nil {
+		accessControl = serviceDetail.AccessControl
+	}
+	accessControl.ServiceID = int64(info.ID)
+	accessControl.OpenAuth = input.OpenAuth
+	accessControl.BlackList = input.BlackList
+	accessControl.WhiteList = input.WhiteList
+	accessControl.WhiteHostName = input.WhiteHostName
+	accessControl.ClientIPFlowLimit = input.ClientIPFlowLimit
+	accessControl.ServiceFlowLimit = input.ServiceFlowLimit
+	if err := tx.Save(accessControl).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	//7.更新负载均衡load_blance
+	var loadBalance *models.LoadBalance
+	if serviceDetail.LoadBalance != nil {
+		loadBalance = serviceDetail.LoadBalance
+	} else {
+		loadBalance = &models.LoadBalance{}
+	}
+	loadBalance.ServiceID = int64(info.ID)
+	loadBalance.RoundType = input.RoundType
+	loadBalance.IpList = input.IpList
+	loadBalance.WeightList = input.WeightList
+	loadBalance.ForbidList = input.ForbidList
+	if err := tx.Save(loadBalance).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	//8.提交事务
+	if err := tx.Commit().Error; err != nil {
+		return err
+	}
+
+	return nil
 }

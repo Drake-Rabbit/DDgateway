@@ -108,13 +108,13 @@ func (c *ServiceController) ServiceDetail(ctx *gin.Context) {
 	}
 
 	//service, err := models.GetServiceDetailById(uint(input.ID))
-	service, err := c.serviceService.GetServiceDetail(input.ID)
+	detail, err := c.serviceService.GetServiceDetail(input.ID)
 	if err != nil {
 		response.NotFound(ctx, "Service not found")
 		return
 	}
 
-	response.Success(ctx, service)
+	response.Success(ctx, detail)
 }
 
 // UpdateService 更新服务
@@ -137,13 +137,13 @@ func (c *ServiceController) UpdateService(ctx *gin.Context) {
 		return
 	}
 
-	service, err := c.serviceService.UpdateService(id, req.LoadType, req.ServiceName, req.ServiceDesc)
+	serviceinfo, err := c.serviceService.UpdateService(id, req.LoadType, req.ServiceName, req.ServiceDesc)
 	if err != nil {
 		response.NotFound(ctx, "Service not found")
 		return
 	}
 
-	response.Success(ctx, service)
+	response.Success(ctx, serviceinfo)
 }
 
 // DeleteService 删除服务
@@ -190,13 +190,13 @@ func (c *ServiceController) CreateHTTP(ctx *gin.Context) {
 		return
 	}
 
-	service, err := c.serviceService.CreateHTTPService(&input)
+	serviceinfo, err := c.serviceService.CreateHTTPService(&input)
 	if err != nil {
 		response.Error(ctx, err.Error())
 		return
 	}
 
-	response.Success(ctx, service)
+	response.Success(ctx, serviceinfo)
 }
 
 // UpdateHTTP 更新 HTTP 服务
@@ -258,7 +258,12 @@ func (c *ServiceController) CreateGrpc(ctx *gin.Context) {
 		return
 	}
 
-	// TODO: 实现创建 gRPC 服务逻辑
+	_, err := c.serviceService.CreateGrpcService(&input)
+	if err != nil {
+		response.Error(ctx, err.Error())
+		return
+	}
+
 	response.Success(ctx, gin.H{"message": "gRPC service created"})
 }
 
@@ -270,6 +275,11 @@ func (c *ServiceController) UpdateGrpc(ctx *gin.Context) {
 		return
 	}
 
-	// TODO: 实现更新 gRPC 服务逻辑
+	err := c.serviceService.UpdateGrpcService(&input)
+	if err != nil {
+		response.Error(ctx, "grpc创建失败:"+err.Error())
+		return
+	}
+
 	response.Success(ctx, gin.H{"message": "gRPC service updated"})
 }

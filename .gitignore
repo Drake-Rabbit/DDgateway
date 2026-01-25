@@ -54,8 +54,14 @@ coverage/
 .settings/
 .claude/
 .trae/
+.trae
 
 
 # 忽略换行符相关的临时文件
 *.orig
 *.rej
+
+#
+*.json
+test.go
+.exe

@@ -12,22 +12,10 @@ var (
 	DefaultSize = 10
 	DefaultPage = 1
 
-	// 前台默认分页条数
-	DefaultFrontSize = 6
 	// StaticResource 静态文件目录
-	//StaticResource = "E:\\mall-static"
-	StaticResource = "/home/xueden/servers/mall-baby/mall-static"
-	// 邮件发送方
-	EmailFrom = "379533177@qq.com"
-	// 邮箱授权码
-	EmailPassWord = "ryjxbuztvacacahj"
-	// 邮箱host
-	EmailHost = "smtp.qq.com"
-	// 邮箱端口号
-	EmailPort = "587"
+	StaticResource = "/home"
 	//ip2region存放路径
 	DbPath = StaticResource + "/ip2region.xdb"
-
 	//
 
 	LoadTypeHTTP = 0
