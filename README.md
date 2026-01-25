@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # Gateway Service
 
 一个基于 Gin + GORM 的 Go 微服务网关，具有登录和多租户功能,前端使用 Nuxt.js + vue3.js 实现。
@@ -106,3 +107,7 @@ gateway-service/
 
 
 
+=======
+# DD_gateway
+基于go + nuxt + vue +gorm + mysql 实现的多租户网关
+>>>>>>> 4d84b78a0acf441b81484026063cefe62fd284e2
