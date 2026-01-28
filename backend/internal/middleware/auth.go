@@ -19,17 +19,21 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		}
 
 		// Extract token from "Bearer <token>" format
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == authHeader {
+		tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+		if tokenString == "" || tokenString == authHeader {
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
 			c.Abort()
 			return
 		}
 
+		// Debug info
+		fmt.Printf("Raw Authorization: %s\n", authHeader)
+		fmt.Printf("Extracted token: %s\n", tokenString)
+
 		// Validate token
-		fmt.Println("ValidateToken前:", tokenString)
 		claims, err := jwt.ValidateToken(tokenString, jwtSecret)
 		if err != nil {
+			fmt.Printf("Token validation error: %v\n", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})
 			c.Abort()
 			return
@@ -37,10 +41,7 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 
 		// Set user info in context
 		c.Set("user_id", claims.UserID)
-		c.Set("tenant_id", claims.TenantID)
 		c.Set("username", claims.Username)
-		c.Set("role", claims.Role)
-
 		c.Next()
 	}
 }

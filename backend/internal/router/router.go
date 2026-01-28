@@ -18,9 +18,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 
 	// 创建控制器实例
 	authController := controller.NewAuthController(cfg)
-	tenantController := controller.NewTenantController()
 	userController := controller.NewUserController()
 	serviceController := controller.NewServiceController()
+	appController := controller.NewAppController()
 
 	// API 路由
 	api := r.Group("/api")
@@ -36,20 +36,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware(cfg.JWT.Secret))
 		{
-			// 租户路由
-			tenants := protected.Group("/tenants")
-			tenants.Use(middleware.TenantMiddleware())
-			{
-				tenants.GET("/list", tenantController.ListTenants)
-				tenants.GET("/detail/:id", tenantController.GetTenant)
-				tenants.POST("/create", tenantController.CreateTenant)
-				tenants.POST("/update", tenantController.UpdateTenant)
-				tenants.POST("/delete", tenantController.DeleteTenant)
-			}
 
 			// 用户路由
 			users := protected.Group("/users")
-			users.Use(middleware.TenantMiddleware())
 			{
 				users.GET("/lists", userController.ListUsers)
 				users.GET("/detail/", userController.GetUser)
@@ -57,9 +46,25 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				users.POST("/delete/", userController.DeleteUser)
 			}
 
+			// app租户应用路由
+			apps := protected.Group("/apps")
+			{
+				apps.GET("/list", appController.GetAppList)
+				apps.GET("/detail", appController.GetAppDetail)
+				apps.POST("/create", appController.CreateApp)
+				apps.POST("/update", appController.UpdateApp)
+				apps.DELETE("/delete", appController.DeleteApp)
+
+				// 增强的应用管理功能
+				apps.GET("/search", appController.SearchApp)
+				apps.POST("/batch_create", appController.BatchCreateApp)
+				apps.POST("/batch_update", appController.BatchUpdateApp)
+				apps.POST("/batch_delete", appController.BatchDeleteApp)
+				apps.GET("/stats", appController.GetAppStats)
+			}
+
 			// 服务路由
 			services := protected.Group("/services")
-			services.Use(middleware.TenantMiddleware())
 			{
 				// 通用接口
 				services.GET("/service_list", serviceController.ListServices)

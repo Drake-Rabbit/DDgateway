@@ -34,10 +34,9 @@ func (c *UserController) ListUsers(ctx *gin.Context) {
 
 // GetUser 获取用户详情
 func (c *UserController) GetUser(ctx *gin.Context) {
-	tenantID := ctx.GetUint("tenant_id")
 	id := ctx.Param("id")
 
-	user, err := c.userService.GetUser(tenantID, id)
+	user, err := c.userService.GetUser(id)
 	if err != nil {
 		response.NotFound(ctx, "User not found")
 		return
@@ -48,7 +47,6 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 
 // UpdateUser 更新用户
 func (c *UserController) UpdateUser(ctx *gin.Context) {
-	tenantID := ctx.GetUint("tenant_id")
 	id := ctx.Param("id")
 
 	var req struct {
@@ -62,7 +60,7 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	user, err := c.userService.UpdateUser(tenantID, id, req.Email, req.Role, req.Status)
+	user, err := c.userService.UpdateUser(id, req.Email, req.Role, req.Status)
 	if err != nil {
 		response.NotFound(ctx, "User not found")
 		return
@@ -73,10 +71,9 @@ func (c *UserController) UpdateUser(ctx *gin.Context) {
 
 // DeleteUser 删除用户
 func (c *UserController) DeleteUser(ctx *gin.Context) {
-	tenantID := ctx.GetUint("tenant_id")
 	id := ctx.Param("id")
 
-	err := c.userService.DeleteUser(tenantID, id)
+	err := c.userService.DeleteUser(id)
 	if err != nil {
 		response.NotFound(ctx, "User not found")
 		return

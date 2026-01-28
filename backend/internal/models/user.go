@@ -10,8 +10,6 @@ import (
 // User 用户结构体
 type User struct {
 	ID        uint           `gorm:"primaryKey" json:"id"`
-	TenantID  uint           `gorm:"not null;index" json:"tenant_id"`
-	Tenant    Tenant         `gorm:"foreignKey:TenantID" json:"tenant,omitempty"`
 	Username  string         `gorm:"size:50;not null;uniqueIndex:idx_tenant_user" json:"username"`
 	Email     string         `gorm:"size:100;not null;uniqueIndex:idx_tenant_email" json:"email"`
 	Password  string         `gorm:"size:255;not null" json:"-"`
@@ -66,21 +64,21 @@ func GetUserById(id uint) (*User, error) {
 // GetUserByUsername 根据用户名获取用户
 func GetUserByUsername(username string) (*User, error) {
 	var user User
-	err := DB.Preload("Tenant").Where("username = ?", username).First(&user).Error
+	err := DB.Where("username = ?", username).First(&user).Error
 	return &user, err
 }
 
 // GetUserByEmail 根据邮箱获取用户
 func GetUserByEmail(email string) (*User, error) {
 	var user User
-	err := DB.Preload("Tenant").Where("email = ?", email).First(&user).Error
+	err := DB.Where("email = ?", email).First(&user).Error
 	return &user, err
 }
 
 // GetUsersByTenantId 根据租户ID获取用户列表
 func GetUsersByTenantId(tenantID uint) ([]User, error) {
 	var users []User
-	err := DB.Preload("Tenant").Where("tenant_id = ?", tenantID).Find(&users).Error
+	err := DB.Where("tenant_id = ?", tenantID).Find(&users).Error
 	return users, err
 }
 
@@ -95,15 +93,15 @@ func DeleteUser(id uint) error {
 }
 
 // UsernameExists 用户名是否存在
-func UsernameExists(tenantID uint, username string) (bool, error) {
+func UsernameExists(username string) (bool, error) {
 	var count int64
-	err := DB.Model(&User{}).Where("tenant_id = ? AND username = ?", tenantID, username).Count(&count).Error
+	err := DB.Model(&User{}).Where("  username = ?", username).Count(&count).Error
 	return count > 0, err
 }
 
 // EmailExists 邮箱是否存在
-func EmailExists(tenantID uint, email string) (bool, error) {
+func EmailExists(email string) (bool, error) {
 	var count int64
-	err := DB.Model(&User{}).Where("tenant_id = ? AND email = ?", tenantID, email).Count(&count).Error
+	err := DB.Model(&User{}).Where("email = ?", email).Count(&count).Error
 	return count > 0, err
 }

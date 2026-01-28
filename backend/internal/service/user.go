@@ -30,7 +30,7 @@ func (s *UserService) ListUsers(tenantID int) ([]models.User, error) {
 }
 
 // GetUser 获取用户
-func (s *UserService) GetUser(tenantID uint, userID string) (*models.User, error) {
+func (s *UserService) GetUser(userID string) (*models.User, error) {
 	var uintId uint
 	if _, err := fmt.Sscanf(userID, "%d", &uintId); err != nil {
 		return nil, err
@@ -39,17 +39,13 @@ func (s *UserService) GetUser(tenantID uint, userID string) (*models.User, error
 	user, err := models.GetUserById(uintId)
 	if err != nil {
 		return nil, err
-	}
-
-	if user.TenantID != tenantID {
-		return nil, errors.New("user not found")
 	}
 
 	return user, nil
 }
 
 // UpdateUser 更新用户
-func (s *UserService) UpdateUser(tenantID uint, userID string, email, role, status string) (*models.User, error) {
+func (s *UserService) UpdateUser(userID string, email, role, status string) (*models.User, error) {
 	var uintId uint
 	if _, err := fmt.Sscanf(userID, "%d", &uintId); err != nil {
 		return nil, err
@@ -58,10 +54,6 @@ func (s *UserService) UpdateUser(tenantID uint, userID string, email, role, stat
 	user, err := models.GetUserById(uintId)
 	if err != nil {
 		return nil, err
-	}
-
-	if user.TenantID != tenantID {
-		return nil, errors.New("user not found")
 	}
 
 	if email != "" {
@@ -82,7 +74,7 @@ func (s *UserService) UpdateUser(tenantID uint, userID string, email, role, stat
 }
 
 // DeleteUser 删除用户
-func (s *UserService) DeleteUser(tenantID uint, userID string) error {
+func (s *UserService) DeleteUser(userID string) error {
 	var uintId uint
 	if _, err := fmt.Sscanf(userID, "%d", &uintId); err != nil {
 		return err
@@ -93,23 +85,14 @@ func (s *UserService) DeleteUser(tenantID uint, userID string) error {
 		return err
 	}
 
-	if user.TenantID != tenantID {
-		return errors.New("user not found")
-	}
-
-	return models.DeleteUser(uintId)
+	return models.DeleteUser(user.ID)
 }
 
 // Register 用户注册
 func (s *UserService) Register(req RegisterRequest) (*models.User, error) {
-	// 查找租户
-	tenant, err := models.GetTenantByCode(req.TenantCode)
-	if err != nil {
-		return nil, errors.New("invalid tenant code")
-	}
 
 	// 检查用户名是否存在
-	exists, err := models.UsernameExists(tenant.ID, req.Username)
+	exists, err := models.UsernameExists(req.Username)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +101,7 @@ func (s *UserService) Register(req RegisterRequest) (*models.User, error) {
 	}
 
 	// 检查邮箱是否存在
-	exists, err = models.EmailExists(tenant.ID, req.Email)
+	exists, err = models.EmailExists(req.Email)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +110,6 @@ func (s *UserService) Register(req RegisterRequest) (*models.User, error) {
 	}
 
 	user := &models.User{
-		TenantID: tenant.ID,
 		Username: req.Username,
 		Email:    req.Email,
 		Password: req.Password,

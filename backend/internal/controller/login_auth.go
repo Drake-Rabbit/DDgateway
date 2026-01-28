@@ -6,6 +6,7 @@ import (
 	"gateway-service/internal/service"
 	"gateway-service/pkg/jwt"
 	"gateway-service/pkg/response"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -60,7 +61,7 @@ func (a *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	token, err := jwt.GenerateToken(user.ID, user.TenantID, user.Username, user.Role,
+	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username,
 		a.cfg.JWT.Secret, a.cfg.JWT.ExpireHours)
 	if err != nil {
 		response.InternalError(ctx, "Failed to generate token")
@@ -96,8 +97,7 @@ func (a *AuthController) Login(ctx *gin.Context) {
 	user.LastLogin = &now
 	_ = a.userService.UpdateLastLogin(user)
 
-	token, err := jwt.GenerateToken(user.ID, user.TenantID, user.Username, user.Role,
-		a.cfg.JWT.Secret, a.cfg.JWT.ExpireHours)
+	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username, a.cfg.JWT.Secret, a.cfg.JWT.ExpireHours)
 	if err != nil {
 		response.InternalError(ctx, "Failed to generate token")
 		return

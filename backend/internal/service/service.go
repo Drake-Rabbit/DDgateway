@@ -64,14 +64,14 @@ func (s *ServiceService) UpdateService(serviceID int64, loadType int, serviceNam
 
 // DeleteService 删除服务
 func (s *ServiceService) DeleteService(serviceID int64) error {
-	// 删除关联规则
-	models.DeleteHttpRuleByServiceId(serviceID)
-	models.DeleteTcpRuleByServiceId(serviceID)
-	models.DeleteGrpcRuleByServiceId(serviceID)
-	models.DeleteAccessControlByServiceId(serviceID)
-	models.DeleteLoadBalanceByServiceId(serviceID)
 
-	// 删除服务
+	// 删除关联规则 (理论上serviceinfo被逻辑删除,gorm就找不到对应的联动数据),以便快速恢复
+	//models.DeleteHttpRuleByServiceId(serviceID)
+	//models.DeleteTcpRuleByServiceId(serviceID)
+	//models.DeleteGrpcRuleByServiceId(serviceID)
+	//models.DeleteAccessControlByServiceId(serviceID)
+	//models.DeleteLoadBalanceByServiceId(serviceID)
+	// 逻辑删除服务serviinfo即可,以便快速恢复
 	return models.DeleteService(uint(serviceID))
 }
 

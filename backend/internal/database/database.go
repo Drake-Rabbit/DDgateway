@@ -20,15 +20,20 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		cfg.Database.Port,
 		cfg.Database.DBName,
 	)
-
-	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{})
+	//关闭对mysql外键的创建
+	db, err := gorm.Open(mysql.Open(dsn), &gorm.Config{
+		DisableForeignKeyConstraintWhenMigrating: true,
+	})
+	if err != nil {
+		return nil, err
+	}
+	db, err = gorm.Open(mysql.Open(dsn), &gorm.Config{})
 	if err != nil {
 		return nil, err
 	}
 
 	// Auto migrate tables
 	err = db.AutoMigrate(
-		&models.Tenant{},
 		&models.User{},
 		&models.ServiceInfo{},
 		&models.AccessControl{},
@@ -36,6 +41,7 @@ func InitDB(cfg *config.Config) (*gorm.DB, error) {
 		&models.HttpRule{},
 		&models.TcpRule{},
 		&models.GrpcRule{},
+		&models.App{},
 	)
 	if err != nil {
 		return nil, err

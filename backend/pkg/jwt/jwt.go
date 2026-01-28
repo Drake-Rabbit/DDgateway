@@ -2,26 +2,23 @@ package jwt
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
 type Claims struct {
-	UserID   uint   `json:"user_id"`
-	TenantID uint   `json:"tenant_id"`
+	UserID   string `json:"user_id"`
 	Username string `json:"username"`
-	Role     string `json:"role"`
 	jwt.RegisteredClaims
 }
 
 // GenerateToken creates a new JWT token
-func GenerateToken(userID, tenantID uint, username, role, secret string, expireHours int) (string, error) {
+func GenerateToken(userID, username, secret string, expireHours int) (string, error) {
 	claims := Claims{
 		UserID:   userID,
-		TenantID: tenantID,
 		Username: username,
-		Role:     role,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * time.Duration(expireHours))),
 			IssuedAt:  jwt.NewNumericDate(time.Now()),
@@ -39,7 +36,12 @@ func GenerateToken(userID, tenantID uint, username, role, secret string, expireH
 
 // ValidateToken validates a JWT token and returns the claims
 func ValidateToken(tokenString, secret string) (*Claims, error) {
+	// 验证签名方法
 	token, err := jwt.ParseWithClaims(tokenString, &Claims{}, func(token *jwt.Token) (interface{}, error) {
+		// 验证签名算法
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
 		return []byte(secret), nil
 	})
 

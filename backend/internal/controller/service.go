@@ -155,7 +155,7 @@ func (c *ServiceController) DeleteService(ctx *gin.Context) {
 	}
 
 	if err := c.serviceService.DeleteService(input.ID); err != nil {
-		response.NotFound(ctx, "Service not found")
+		response.NotFound(ctx, "Service 删除失败")
 		return
 	}
 
