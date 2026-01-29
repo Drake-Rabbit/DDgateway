@@ -21,6 +21,7 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 	userController := controller.NewUserController()
 	serviceController := controller.NewServiceController()
 	appController := controller.NewAppController()
+	dashboardController := controller.NewDashboradController()
 
 	// API 路由
 	api := r.Group("/api")
@@ -80,6 +81,17 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				// gRPC 服务
 				services.POST("/service_add_grpc", serviceController.CreateGrpc)
 				services.POST("/service_update_grpc", serviceController.UpdateGrpc)
+			}
+
+			// 仪表盘
+			dashboard := protected.Group("/dashboard")
+			{
+				//最上方基础的服务和app统计数
+				dashboard.GET("/panelGruopData", dashboardController.PanelGruopData)
+				//flowstat请求数对比,昨日今日请求数
+				dashboard.GET("/flowstat", dashboardController.FlowStat)
+				//仪表盘各个服务type分类总数
+				dashboard.GET("/serviceStat", dashboardController.ServiceStat)
 			}
 		}
 	}

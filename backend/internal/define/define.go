@@ -12,12 +12,6 @@ var (
 	DefaultSize = 10
 	DefaultPage = 1
 
-	// StaticResource 静态文件目录
-	StaticResource = "/home"
-	//ip2region存放路径
-	DbPath = StaticResource + "/ip2region.xdb"
-	//
-
 	LoadTypeHTTP = 0
 	LoadTypeTCP  = 1
 	LoadTypeGRPC = 2
@@ -39,6 +33,14 @@ type UserClaim struct {
 	IsAdmin bool // 是否超管
 	RoleId  uint // 所属角色
 }
+
+var (
+	LoadTypeMap = map[int]string{
+		LoadTypeHTTP: "HTTP",
+		LoadTypeTCP:  "TCP",
+		LoadTypeGRPC: "GRPC",
+	}
+)
 
 // PageHelper 分页参数处理
 func DefaultPageNum(inputPageNo, inputPageSize int) (outpageNo, outPageSize int) {

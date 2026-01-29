@@ -264,12 +264,12 @@ func (s *ServiceService) ServiceStat(input *dto.ServiceStatInput) (output *dto.S
 	//今日每小时的统计
 	todayList := []int64{}
 	for i := 0; i < time.Now().Hour(); i++ {
-		todayList = append(todayList, 0)
+		todayList = append(todayList, 0) //现在没数据，默认为0
 	}
 	//昨日每小时的统计
 	yesterdayList := []int64{}
 	for i := 0; i < 23; i++ {
-		yesterdayList = append(todayList, 0)
+		yesterdayList = append(todayList, 0) //现在没数据，默认为0
 	}
 
 	return &dto.ServiceStatOutput{
@@ -683,4 +683,17 @@ func (s *ServiceService) UpdateGrpcService(input *dto.ServiceUpdateGrpcInput) er
 	}
 
 	return nil
+}
+
+// GruopByLoadType 统计服务分类
+func (s *ServiceService) GroupByLoadType() ([]dto.DashServiceStatItemOutput, error) {
+	list := []dto.DashServiceStatItemOutput{}
+
+	err := models.DB.Model(&models.ServiceInfo{}).Select("load_type ,count(*) as value").
+		Group("load_type").Scan(&list).Error
+	if err != nil {
+		return nil, err
+	}
+
+	return list, nil
 }

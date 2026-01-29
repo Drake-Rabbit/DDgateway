@@ -18,46 +18,6 @@ func (*ServiceInfo) TableName() string {
 	return "services"
 }
 
-//func (i *ServiceInfo) ServiceDetail(serviceID uint) (*ServiceDetail, error) {
-//	detail := &ServiceDetail{}
-//
-//	// 获取基本信息
-//	service, err := GetServiceById(serviceID)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	detail.Info = service
-//
-//	// 根据负载类型获取对应规则
-//	switch service.LoadType {
-//	case 0: // HTTP
-//		if rule, err := GetHttpRuleByServiceId(int64(serviceID)); err == nil {
-//			detail.HTTPRule = rule
-//		}
-//	case 1: // TCP
-//		if rule, err := GetTcpRuleByServiceId(int64(serviceID)); err == nil {
-//			detail.TCPRule = rule
-//		}
-//	case 2: // GRPC
-//		if rule, err := GetGrpcRuleByServiceId(int64(serviceID)); err == nil {
-//			detail.GRPCRule = rule
-//		}
-//	}
-//
-//	// 获取负载均衡
-//	if lb, err := GetLoadBalanceByServiceId(int64(serviceID)); err == nil {
-//		detail.LoadBalance = lb
-//	}
-//
-//	// 获取访问控制
-//	if ac, err := GetAccessControlByServiceId(int64(serviceID)); err == nil {
-//		detail.AccessControl = ac
-//	}
-//
-//	return detail, nil
-//}
-
 // CreateService 创建服务
 func CreateService(service *ServiceInfo) error {
 	return DB.Create(service).Error
@@ -74,13 +34,6 @@ func CreateService(service *ServiceInfo) error {
 func GetServiceById(id uint) (*ServiceInfo, error) {
 	var service ServiceInfo
 	err := DB.First(&service, id).Error
-	return &service, err
-}
-
-// GetServiceByName 根据服务名获取服务
-func GetServiceByName(name string) (*ServiceInfo, error) {
-	var service ServiceInfo
-	err := DB.Where("service_name = ?", name).First(&service).Error
 	return &service, err
 }
 
