@@ -20,20 +20,13 @@ func (s *AppService) GetAppList(params *dto.APPListInput) ([]models.App, int64, 
 }
 
 // GetApp 获取应用详情
-func (s *AppService) GetApp(appID string) (*models.App, error) {
-	return models.GetByAppID(appID)
+func (s *AppService) GetAppDetailByID(appID int) (*models.App, error) {
+	return models.GetAppByPrimaryID(uint(appID))
 }
 
 // CreateApp 创建应用
 func (s *AppService) CreateApp(input *dto.APPAddHttpInput) (*models.App, error) {
 	// 检查AppID是否已存在
-	exists, err := models.Exists(input.AppID)
-	if err != nil {
-		return nil, err
-	}
-	if exists {
-		return nil, models.ErrAppAlreadyExists
-	}
 
 	// 如果没有提供Secret，则生成随机密钥
 	if input.Secret == "" {
@@ -59,17 +52,8 @@ func (s *AppService) CreateApp(input *dto.APPAddHttpInput) (*models.App, error) 
 
 // UpdateApp 更新应用
 func (s *AppService) UpdateApp(input *dto.APPUpdateHttpInput) error {
-	// 检查App是否存在
-	exists, err := models.Exists(input.AppID)
-	if err != nil {
-		return err
-	}
-	if !exists {
-		return models.ErrAppNotFound
-	}
-
-	// 获取现有App
-	app, err := models.GetByAppID(input.AppID)
+	// 检查App是否存在,存在则获取
+	app, err := models.GetAppByPrimaryID(uint(input.ID))
 	if err != nil {
 		return err
 	}
@@ -103,11 +87,11 @@ func (s *AppService) UpdateApp(input *dto.APPUpdateHttpInput) error {
 }
 
 // DeleteApp 删除应用
-func (s *AppService) DeleteApp(appID string) error {
+func (s *AppService) DeleteApp(appID int) error {
 	// 检查App是否存在
-	app, err := models.GetByAppID(appID)
+	app, err := models.GetAppByPrimaryID(uint(appID))
 	if err != nil {
-		return models.ErrAppNotFound
+		return err
 	}
 
 	// 软删除
@@ -131,26 +115,4 @@ func (s *AppService) GetAppStats() (map[string]interface{}, error) {
 	}
 
 	return cacheInfo, nil
-}
-
-// SearchApp 搜索App（使用构建器模式）
-func (s *AppService) SearchApp(params *dto.APPListInput) ([]models.App, int64, error) {
-	// 使用新的构建器模式
-	query := models.NewAppQuery().
-		WhereLike("name", params.Info)
-
-	count, err := query.Count()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	query.Offset((params.PageNo - 1) * params.PageSize).
-		Limit(params.PageSize)
-
-	list, err := query.Find()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return list, count, nil
 }

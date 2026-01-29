@@ -13,15 +13,12 @@ import (
 type ServiceService struct{}
 
 // PageListServices 分页获取服务列表
-func (s *ServiceService) PageListServices(in *dto.ServiceListInput) ([]models.ServiceInfo, int, int, int64, error) {
-	var offset int
-	// 分页 默认第一页,默认size大小为10
-	pageNo, pageSize, offset := define.PageHelper(in.PageNo, in.PageSize)
+func (s *ServiceService) PageListServices(in *dto.ServiceListInput) ([]models.ServiceInfo, int64, error) {
 
-	list, total, err := models.GetServicePage(offset, pageSize, in.Info)
+	list, total, err := models.GetServicePage(in)
 
 	//数据总数
-	return list, pageNo, pageSize, total, err
+	return list, total, err
 }
 
 // GetService 获取服务详情

@@ -32,7 +32,9 @@ func (c *ServiceController) ListServices(ctx *gin.Context) {
 		return
 	}
 
-	results, pageNo, pageSize, total, err := c.serviceService.PageListServices(&input)
+	input.PageNo, input.PageSize = define.DefaultPageNum(input.PageNo, input.PageSize)
+
+	results, total, err := c.serviceService.PageListServices(&input)
 	if err != nil {
 		response.InternalError(ctx, "Database error")
 		return
@@ -93,14 +95,13 @@ func (c *ServiceController) ListServices(ctx *gin.Context) {
 	response.Success(ctx, gin.H{
 		"list":  ServiceListItemOutput,
 		"total": total,
-		"page":  pageNo,
-		"size":  pageSize,
+		"page":  input.PageNo,
+		"size":  input.PageSize,
 	})
 }
 
 // ServiceDetail 获取服务详情
 func (c *ServiceController) ServiceDetail(ctx *gin.Context) {
-
 	var input dto.ServiceDeleteInput
 	if err := ctx.ShouldBindQuery(&input); err != nil {
 		response.BadRequest(ctx, err.Error())

@@ -53,13 +53,9 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 				apps.GET("/detail", appController.GetAppDetail)
 				apps.POST("/create", appController.CreateApp)
 				apps.POST("/update", appController.UpdateApp)
-				apps.DELETE("/delete", appController.DeleteApp)
+				apps.POST("/delete", appController.DeleteApp)
 
 				// 增强的应用管理功能
-				apps.GET("/search", appController.SearchApp)
-				apps.POST("/batch_create", appController.BatchCreateApp)
-				apps.POST("/batch_update", appController.BatchUpdateApp)
-				apps.POST("/batch_delete", appController.BatchDeleteApp)
 				apps.GET("/stats", appController.GetAppStats)
 			}
 

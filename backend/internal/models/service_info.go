@@ -1,6 +1,7 @@
 package models
 
 import (
+	"gateway-service/internal/dto"
 	"gorm.io/gorm"
 )
 
@@ -63,11 +64,11 @@ func CreateService(service *ServiceInfo) error {
 }
 
 // GetServices 获取所有服务
-func GetServices() ([]ServiceInfo, error) {
-	var list []ServiceInfo
-	err := DB.Find(&list).Error
-	return list, err
-}
+//func GetServices() ([]ServiceInfo, error) {
+//	var list []ServiceInfo
+//	err := DB.Find(&list).Error
+//	return list, err
+//}
 
 // GetServiceById 根据ID获取服务
 func GetServiceById(id uint) (*ServiceInfo, error) {
@@ -84,23 +85,30 @@ func GetServiceByName(name string) (*ServiceInfo, error) {
 }
 
 // GetServicePage 分页获取服务
-func GetServicePage(offset, limit int, keyword string) ([]ServiceInfo, int64, error) {
+func GetServicePage(params *dto.ServiceListInput) ([]ServiceInfo, int64, error) {
 	var list []ServiceInfo
 	var total int64
 
 	query := DB.Model(&ServiceInfo{})
 	query = query.Select("*")
 
-	if keyword != "" {
-		query = query.Where("service_name LIKE ? OR service_desc LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	if params.Info != "" {
+		query = query.Where("service_name LIKE ? OR service_desc LIKE ?", "%"+params.Info+"%", "%"+params.Info+"%")
 	}
 
 	if err := query.Count(&total).Error; err != nil {
 		return nil, 0, err
 	}
 
-	err := query.Order("id DESC").Offset(offset).Limit(limit).Find(&list).Error
-	return list, total, err
+	// 分页查询
+	offset := (params.PageNo - 1) * params.PageSize
+	err := query.Offset(offset).Limit(params.PageSize).
+		Order("id desc").Find(&list).Error
+	if err != nil && err != gorm.ErrRecordNotFound {
+		return nil, 0, err
+	}
+
+	return list, total, nil
 }
 
 // UpdateService 更新服务

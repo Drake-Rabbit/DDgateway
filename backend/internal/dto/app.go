@@ -72,3 +72,7 @@ type APPUpdateHttpInput struct {
 //func (params *APPUpdateHttpInput) GetValidParams(c *gin.Context) error {
 //	return public.DefaultGetValidParams(c, params)
 //}
+
+type APPDeleteInput struct {
+	ID int64 `json:"id" form:"id" comment:"租户ID" validate:"required"`
+}

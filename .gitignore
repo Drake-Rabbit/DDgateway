@@ -55,6 +55,8 @@ coverage/
 .claude/
 .trae/
 .trae
+testdata
+testdata/
 
 
 # 忽略换行符相关的临时文件

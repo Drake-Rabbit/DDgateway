@@ -41,17 +41,17 @@ type UserClaim struct {
 }
 
 // PageHelper 分页参数处理
-func PageHelper(inPageNo, inPageSize int) (pageNo, pageSize, offset int) {
-	pageNo = inPageNo
-	pageSize = inPageSize
+func DefaultPageNum(inputPageNo, inputPageSize int) (outpageNo, outPageSize int) {
+	pageNo := inputPageNo
+	pageSize := inputPageSize
 
-	if pageSize <= 0 {
-		pageSize = DefaultSize
-	}
 	if pageNo <= 0 {
 		pageNo = DefaultPage
 	}
 
-	offset = (pageNo - 1) * pageSize
-	return pageNo, pageSize, offset
+	if pageSize <= 0 {
+		pageSize = DefaultSize
+	}
+
+	return pageNo, pageSize
 }

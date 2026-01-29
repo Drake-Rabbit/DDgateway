@@ -20,7 +20,6 @@ type App struct {
 	WhiteIPS string `json:"white_ips" gorm:"column:white_ips" description:"ip白名单，支持前缀匹配"`
 	Qpd      int64  `json:"qpd" gorm:"column:qpd" description:"日请求量限制"`
 	Qps      int64  `json:"qps" gorm:"column:qps" description:"每秒请求量限制"`
-	IsDelete int8   `json:"is_delete" gorm:"column:is_delete;default:0" description:"是否已删除；0：否；1：是"`
 }
 
 func (a *App) TableName() string {
@@ -29,22 +28,10 @@ func (a *App) TableName() string {
 
 // CRUD functions
 
-func GetByID(id uint) (*App, error) {
+func GetAppByPrimaryID(id uint) (*App, error) {
 	model := &App{}
 	err := DB.Where("id = ?", id).First(model).Error
 	return model, err
-}
-
-func GetByAppID(appID string) (*App, error) {
-	model := &App{}
-	err := DB.Where("app_id = ? AND is_delete = ?", appID, 0).First(model).Error
-	return model, err
-}
-
-func Exists(appID string) (bool, error) {
-	var count int64
-	err := DB.Model(&App{}).Where("app_id = ? AND is_delete = ?", appID, 0).Count(&count).Error
-	return count > 0, err
 }
 
 func Save(a *App) error {
@@ -58,16 +45,16 @@ func Save(a *App) error {
 }
 
 func Update(a *App, updateData map[string]interface{}) error {
-	return DB.Model(a).Where("id = ? AND is_delete = ?", a.ID, 0).Updates(updateData).Error
+	return DB.Model(a).Where("id = ? ", a.ID).Updates(updateData).Error
 }
 
 func Delete(a *App) error {
-	return DB.Model(a).Update("is_delete", 1).Error
+	return DB.Model(a).Delete(&App{}).Where("id = ?", a.ID).Error
 }
 
 func GetCount() (int64, error) {
 	var count int64
-	err := DB.Model(&App{}).Where("is_delete = ?", 0).Count(&count).Error
+	err := DB.Model(&App{}).Count(&count).Error
 	return count, err
 }
 
@@ -77,7 +64,7 @@ func APPList(params *dto.APPListInput) ([]App, int64, error) {
 	var count int64
 
 	// 基础查询
-	query := DB.Model(&App{}).Where("is_delete = ?", 0)
+	query := DB.Model(&App{})
 
 	// 搜索条件
 	if params.Info != "" {
@@ -100,80 +87,6 @@ func APPList(params *dto.APPListInput) ([]App, int64, error) {
 	}
 
 	return list, count, nil
-}
-
-// 构建器模式 - 提供更灵活的查询API
-type AppQuery struct {
-	db *gorm.DB
-}
-
-// NewAppQuery 创建新的查询构建器
-func NewAppQuery() *AppQuery {
-	return &AppQuery{
-		db: DB.Model(&App{}).Where("is_delete = ?", 0),
-	}
-}
-
-// Where 添加查询条件
-func (q *AppQuery) Where(clause string, args ...interface{}) *AppQuery {
-	q.db = q.db.Where(clause, args...)
-	return q
-}
-
-// WhereLike 添加模糊查询条件
-func (q *AppQuery) WhereLike(field, keyword string) *AppQuery {
-	if keyword != "" {
-		q.db = q.db.Where(field+" LIKE ?", "%"+keyword+"%")
-	}
-	return q
-}
-
-// Order 添加排序
-func (q *AppQuery) Order(order string) *AppQuery {
-	q.db = q.db.Order(order)
-	return q
-}
-
-// Limit 设置条数限制
-func (q *AppQuery) Limit(limit int) *AppQuery {
-	q.db = q.db.Limit(limit)
-	return q
-}
-
-// Offset 设置偏移量
-func (q *AppQuery) Offset(offset int) *AppQuery {
-	q.db = q.db.Offset(offset)
-	return q
-}
-
-// Count 获取总数
-func (q *AppQuery) Count() (int64, error) {
-	var count int64
-	err := q.db.Count(&count).Error
-	return count, err
-}
-
-// Find 查询多条记录
-func (q *AppQuery) Find() ([]App, error) {
-	var list []App
-	err := q.db.Find(&list).Error
-	return list, err
-}
-
-// First 查询单条记录
-func (q *AppQuery) First() (*App, error) {
-	var app App
-	err := q.db.First(&app).Error
-	return &app, err
-}
-
-// Batch 批量操作
-func BatchUpdate(ids []uint, updates map[string]interface{}) error {
-	return DB.Model(&App{}).Where("id IN ?", ids).Updates(updates).Error
-}
-
-func BatchDelete(ids []uint) error {
-	return DB.Model(&App{}).Where("id IN ?", ids).Update("is_delete", 1).Error
 }
 
 var AppManagerHandler *AppManager
@@ -213,7 +126,23 @@ func (am *AppManager) GetApp(appID string) (*App, bool) {
 }
 
 func (am *AppManager) LoadOnce() error {
-	return am.RefreshCache()
+	am.init.Do(func() {
+		params := &dto.APPListInput{PageNo: 1, PageSize: 99999}
+		list, _, err := APPList(params)
+		if err != nil {
+			am.err = err
+			return
+		}
+
+		am.Locker.Lock()
+		defer am.Locker.Unlock()
+		for _, listItem := range list {
+			tmpItem := listItem
+			am.AppMap[listItem.AppID] = &tmpItem
+			am.AppSlice = append(am.AppSlice, &tmpItem)
+		}
+	})
+	return am.err
 }
 
 // 便利方法
