@@ -27,10 +27,9 @@ func NewAuthController(cfg *config.Config) *AuthController {
 }
 
 type RegisterRequest struct {
-	Username   string `json:"username" binding:"required"`
-	Email      string `json:"email" binding:"required,email"`
-	Password   string `json:"password" binding:"required,min=6"`
-	TenantCode string `json:"tenant_code" binding:"required"`
+	Username string `json:"username" binding:"required"`
+	Email    string `json:"email" binding:"required,email"`
+	Password string `json:"password" binding:"required,min=6"`
 }
 
 type LoginRequest struct {
@@ -51,10 +50,9 @@ func (a *AuthController) Register(ctx *gin.Context) {
 	}
 
 	user, err := a.userService.Register(service.RegisterRequest{
-		Username:   req.Username,
-		Email:      req.Email,
-		Password:   req.Password,
-		TenantCode: req.TenantCode,
+		Username: req.Username,
+		Email:    req.Email,
+		Password: req.Password,
 	})
 	if err != nil {
 		response.BadRequest(ctx, err.Error())
@@ -88,7 +86,8 @@ func (a *AuthController) Login(ctx *gin.Context) {
 		if err.Error() == "user account is inactive" {
 			response.Forbidden(ctx, err.Error())
 		} else {
-			response.Unauthorized(ctx, err.Error())
+			//response.Unauthorized(ctx, err.Error())
+			response.Unauthorized(ctx, "登录失败,请检查用户名和密码")
 		}
 		return
 	}
