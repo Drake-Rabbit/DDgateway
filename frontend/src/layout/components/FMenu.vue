@@ -3,7 +3,7 @@
 </script>
 
 <template>
-   6543465主页
+  <div>侧边</div>
 </template>
 
 <style scoped>

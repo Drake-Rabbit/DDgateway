@@ -5,7 +5,6 @@ import (
 	"gateway-service/internal/controller"
 	"gateway-service/internal/middleware"
 	"gateway-service/pkg/response"
-
 	"github.com/gin-gonic/gin"
 )
 
@@ -31,11 +30,13 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", authController.Register)
 			auth.POST("/login", authController.Login)
+			auth.POST("/userinfo", authController.TokenUserinfo)
+			auth.POST("/logout", authController.Logout)
 		}
 
 		// 受保护的路由 - 需要认证
 		protected := api.Group("")
-		protected.Use(middleware.AuthMiddleware(cfg.JWT.Secret))
+		protected.Use(middleware.AuthMiddleware())
 		{
 
 			// 用户路由

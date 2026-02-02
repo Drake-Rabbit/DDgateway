@@ -6,7 +6,9 @@ import (
 	"gateway-service/internal/service"
 	"gateway-service/pkg/jwt"
 	"gateway-service/pkg/response"
+	"net/http"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -59,8 +61,7 @@ func (a *AuthController) Register(ctx *gin.Context) {
 		return
 	}
 
-	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username,
-		a.cfg.JWT.Secret, a.cfg.JWT.ExpireHours)
+	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username)
 	if err != nil {
 		response.InternalError(ctx, "Failed to generate token")
 		return
@@ -96,12 +97,48 @@ func (a *AuthController) Login(ctx *gin.Context) {
 	user.LastLogin = &now
 	_ = a.userService.UpdateLastLogin(user)
 
-	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username, a.cfg.JWT.Secret, a.cfg.JWT.ExpireHours)
+	token, err := jwt.GenerateToken(strconv.Itoa(int(user.ID)), user.Username)
 	if err != nil {
 		response.InternalError(ctx, "Failed to generate token")
 		return
 	}
 
-	fmt.Println("login token:", token)
+	fmt.Println("auth token:", token)
 	response.Success(ctx, AuthResponse{Token: token})
+}
+
+func (a *AuthController) TokenUserinfo(ctx *gin.Context) {
+	authHeader := ctx.GetHeader("Authorization")
+	if authHeader == "" {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Authorization header required"})
+		ctx.Abort()
+		return
+	}
+
+	// Extract token from "Bearer <token>" format
+	tokenString := strings.TrimSpace(strings.TrimPrefix(authHeader, "Bearer "))
+	if tokenString == "" || tokenString == authHeader {
+		ctx.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid authorization format"})
+		ctx.Abort()
+		return
+	}
+
+	claims, err := jwt.ValidateToken(tokenString)
+	if err != nil {
+		response.Unauthorized(ctx, err.Error())
+		return
+	}
+	fmt.Println("tokenUserinfo:", claims)
+
+	response.Success(ctx, gin.H{
+		"username": claims.Username,
+		"user_id":  claims.UserID,
+	})
+}
+
+// 注销
+func (a *AuthController) Logout(ctx *gin.Context) {
+	//TODO   加入黑名单功能
+
+	response.Success(ctx, "注销登陆成功")
 }

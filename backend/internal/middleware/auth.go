@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
+func AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
 		if authHeader == "" {
@@ -30,8 +30,8 @@ func AuthMiddleware(jwtSecret string) gin.HandlerFunc {
 		fmt.Printf("Raw Authorization: %s\n", authHeader)
 		fmt.Printf("Extracted token: %s\n", tokenString)
 
-		// Validate token
-		claims, err := jwt.ValidateToken(tokenString, jwtSecret)
+		// Validate token 验证令牌
+		claims, err := jwt.ValidateToken(tokenString)
 		if err != nil {
 			fmt.Printf("Token validation error: %v\n", err)
 			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid or expired token"})

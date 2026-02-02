@@ -1,7 +1,10 @@
-<<<<<<< HEAD
+
 # Gateway Service
 
 一个基于 Gin + GORM 的 Go 微服务网关,前端使用 Nuxt.js + vue3.js 实现。
+
+![img.png](imgs/login.png)
+
 #### 项目结构清晰
 
 ## 项目结构

@@ -17,9 +17,11 @@
 
         <!-- Login Form -->
         <div class="p-6">
-          <el-form @submit.prevent="handleLogin" :model="loginForm" class="w-full">
+          <el-form @submit.prevent="handleLogin" :model="loginForm" class="w-full"
+          :rules="rule" ref="loginFormRef">
+          
             <!-- Username Field -->
-            <el-form-item class="sm text-center">
+            <el-form-item class="sm text-center w-64 mx-auto" prop="username">
               <el-input
                 v-model="loginForm.username"
                 placeholder="请输入用户名"
@@ -30,7 +32,7 @@
             </el-form-item>
 
             <!-- Password Field -->
-            <el-form-item class="text-center">
+            <el-form-item class="text-center w-64 mx-auto" prop="password">
               <el-input
                 v-model="loginForm.password"
                 :type="showPassword ? 'text' : 'password'"
@@ -50,6 +52,7 @@
             <!-- Login Button -->
             <el-form-item class="text-center ">
               <el-button
+                :loading="loading"
                 type="primary"
                 class="w-full center"
                 @click="handleLogin"
@@ -114,9 +117,28 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import {ref} from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { login ,getUserInfo} from '~/api/login.js'
+import { setToken } from '~/composable/auth.js'
+import {useUserStore} from '~/store/user'
+
+const loading = ref(false)
+// 登录成功后，将用户信息存储到 Pinia 中
+const userstore = useUserStore()
+
+const rule = {
+  username: [
+    { required: true, message: '请输入用户名', trigger: 'blur' },
+    { min: 3, max: 10, message: '长度在 3 到 10 个字符', trigger: 'blur' }
+  ],
+  password: [
+    { required: true, message: '请输入密码', trigger: 'blur' },
+    { min: 6, max: 20, message: '密码长度在 6 到 20 个字符', trigger: 'blur' }
+  ]
+}
+const loginFormRef = ref(null)
 
 const router = useRouter()
 const loginForm = ref({
@@ -126,17 +148,45 @@ const loginForm = ref({
 const showPassword = ref(false)
 
 const handleLogin = () => {
+  //表单验证
+  loginFormRef.value.validate((valid) => {
+    if (valid) {
+      // 表单验证通过，执行登录逻辑
+      loading.value = true
+      login(loginForm.value.username, loginForm.value.password)
+      .then(res => {
+        // console.log('XPathResult',res)
+        if (res.data.success == true) {
+          ElMessage.success('登录成功！')
+
+
+          // 登录成功后，将 token 存储到 cookie 中
+          setToken(res.data.data.token)
+
+          // 登录成功后，获取用户信息
+          getUserInfo().then(res => {
+            console.log('用户信息', res)
+            // 登录成功后，将用户信息存储到 Vuex 中
+              // console.log('用户信息', res.data.data)
+              userstore.setUserInfo(res.data.data)
+          })
+          router.push('/')
+        } else {
+          loginForm.value.password = ''
+          loginForm.value.username = ''
+        }
+      }).finally(() => {
+        loading.value = false
+      })
+    }
+  })
+}
+
   // 这里可以添加实际的登录逻辑
   console.log('Login attempt:', loginForm.value)
 
-  // 模拟登录成功
-  if (loginForm.value.username && loginForm.value.password) {
-    ElMessage.success('登录成功！')
-    router.push('/')
-  } else {
-    ElMessage.error('请填写用户名和密码')
-  }
-}
+
+
 
 const handleForgotPassword = () => {
   ElMessage.info('忘记密码功能开发中...')
@@ -147,4 +197,9 @@ const handleForgotPassword = () => {
 .login-container{
   @apply min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-0;
 }
+
+ .login-container {
+   @apply min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-0;
+ }
+
 </style>
