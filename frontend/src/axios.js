@@ -1,6 +1,8 @@
 import axios  from "axios";
 import { ElMessage } from 'element-plus'
-import { getToken } from "~/composable/auth.js";
+import { getToken, removeToken } from "~/composable/auth.js";
+import {useUserStore} from '~/store/user'
+import router from '~/router' // 👈 导入 router 实例
 
 const service = axios.create( {
     baseURL: 'http://localhost:8080/api'
@@ -17,9 +19,6 @@ service.interceptors.request.use(function (config) {
     if (token) {
         config.headers['Authorization'] = 'Bearer ' + token
     }
-
-
-
     return config;
 }, function (error) {
     // 对请求错误做些什么
@@ -41,5 +40,15 @@ service.interceptors.response.use(function (response) {
 }, function (error) {
     // 超出 2xx 范围的状态码都会触发该函数。
     // 对响应错误做点什么
+    if (error.status == 401) {
+        ElMessage({
+            message: '登录过期或token失效，请重新登录',
+            type: 'error',
+            duration: 2000
+        })
+        useUserStore().removeUserInfo() //清除pina的用户信息状态
+        removeToken() //移除cookie的token
+        router.push('/login')
+    }
     return Promise.reject(error);
 });

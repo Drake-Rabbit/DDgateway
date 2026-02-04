@@ -30,19 +30,23 @@ func SetupRouter(cfg *config.Config) *gin.Engine {
 		{
 			auth.POST("/register", authController.Register)
 			auth.POST("/login", authController.Login)
-			auth.POST("/userinfo", authController.TokenUserinfo)
-			auth.POST("/logout", authController.Logout)
+			// 仅对 /userinfo 应用中间件
+			auth.Group("").Use(middleware.AuthMiddleware()).POST("/userinfo", authController.TokenUserinfo)
+			// 仅对 /logout 应用中间件
+			auth.Group("").Use(middleware.AuthMiddleware()).POST("/logout", authController.Logout)
+			// 仅对 /updatepassword 应用中间件
+			auth.Group("").Use(middleware.AuthMiddleware()).POST("/updatepassword", authController.UpdatePassword)
 		}
+		//	Gin路由的router.Use()中间件会永久注册这个中间件,切忌多次use同一个中间件;
 
 		// 受保护的路由 - 需要认证
 		protected := api.Group("")
 		protected.Use(middleware.AuthMiddleware())
 		{
-
-			// 用户路由
+			// 用户管理路由
 			users := protected.Group("/users")
 			{
-				users.GET("/lists", userController.ListUsers)
+				//users.GET("/lists", userController.ListUsers)
 				users.GET("/detail/", userController.GetUser)
 				users.POST("/update/", userController.UpdateUser)
 				users.POST("/delete/", userController.DeleteUser)

@@ -4,7 +4,7 @@ import { ElMessage } from 'element-plus'
 
 const  whitelist = ['/login', '/register','/404']
 
-//全局路由守卫
+//全局路由守卫--监测路由的
 //前置
  router.beforeEach((to, from, next) => {
     // 检查用户是否已登录

@@ -20,17 +20,6 @@ func NewUserController() *UserController {
 }
 
 // ListUsers 获取用户列表
-func (c *UserController) ListUsers(ctx *gin.Context) {
-	tenantID := ctx.GetUint("tenant_id")
-
-	users, err := c.userService.ListUsers(int(tenantID))
-	if err != nil {
-		response.InternalError(ctx, "Failed to fetch users")
-		return
-	}
-
-	response.Success(ctx, users)
-}
 
 // GetUser 获取用户详情
 func (c *UserController) GetUser(ctx *gin.Context) {
@@ -45,7 +34,7 @@ func (c *UserController) GetUser(ctx *gin.Context) {
 	response.Success(ctx, user)
 }
 
-// UpdateUser 更新用户
+// UpdateUser 更新用户状态
 func (c *UserController) UpdateUser(ctx *gin.Context) {
 	id := ctx.Param("id")
 

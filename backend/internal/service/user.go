@@ -3,7 +3,9 @@ package service
 import (
 	"errors"
 	"fmt"
+	"gateway-service/internal/dto"
 	"gateway-service/internal/models"
+	"strconv"
 	"time"
 )
 
@@ -22,11 +24,6 @@ type RegisterRequest struct {
 type LoginRequest struct {
 	Username string
 	Password string
-}
-
-// ListUsers 获取用户列表
-func (s *UserService) ListUsers(tenantID int) ([]models.User, error) {
-	return models.GetUsersByTenantId(uint(tenantID))
 }
 
 // GetUser 获取用户
@@ -151,4 +148,31 @@ func (s *UserService) UpdateLastLogin(user *models.User) error {
 	now := time.Now()
 	user.LastLogin = &now
 	return models.UpdateUser(user)
+}
+
+// UpdatePasswordService 更新密码
+func (s *UserService) UpdatePassword(input *dto.ChangePasswordInput) error {
+	//int化string类型的userID
+	var userID, err = strconv.Atoi(input.UserID)
+	if err != nil {
+		return err
+	}
+
+	//1.先检查用户旧密码是否正确
+	trueUser, err := models.GetUserById(uint(userID))
+
+	isright := trueUser.CheckPassword(input.OldPassword)
+	if !isright {
+		return errors.New("旧密码输入错误")
+	}
+	//2.去model更新新密码
+	trueUser.Password = input.NewPassword
+	if err := trueUser.HashPassword(); err != nil {
+		return errors.New("密码加密失败")
+	}
+	//3.数据库更新
+	if err := models.UpdateUser(trueUser); err != nil {
+		return errors.New("密码更新失败")
+	}
+	return nil
 }

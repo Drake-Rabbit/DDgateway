@@ -123,10 +123,10 @@ import { ElMessage } from 'element-plus'
 import { login ,getUserInfo} from '~/api/login.js'
 import { setToken } from '~/composable/auth.js'
 import {useUserStore} from '~/store/user'
-
+const userstore = useUserStore()
 const loading = ref(false)
 // 登录成功后，将用户信息存储到 Pinia 中
-const userstore = useUserStore()
+
 
 const rule = {
   username: [
@@ -158,11 +158,8 @@ const handleLogin = () => {
         // console.log('XPathResult',res)
         if (res.data.success == true) {
           ElMessage.success('登录成功！')
-
-
           // 登录成功后，将 token 存储到 cookie 中
           setToken(res.data.data.token)
-
           // 登录成功后，获取用户信息
           getUserInfo().then(res => {
             console.log('用户信息', res)
@@ -181,13 +178,6 @@ const handleLogin = () => {
     }
   })
 }
-
-  // 这里可以添加实际的登录逻辑
-  console.log('Login attempt:', loginForm.value)
-
-
-
-
 const handleForgotPassword = () => {
   ElMessage.info('忘记密码功能开发中...')
 }

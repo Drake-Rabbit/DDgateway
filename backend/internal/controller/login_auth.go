@@ -3,9 +3,11 @@ package controller
 import (
 	"fmt"
 	"gateway-service/internal/config"
+	"gateway-service/internal/dto"
 	"gateway-service/internal/service"
 	"gateway-service/pkg/jwt"
 	"gateway-service/pkg/response"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -141,4 +143,40 @@ func (a *AuthController) Logout(ctx *gin.Context) {
 	//TODO   加入黑名单功能
 
 	response.Success(ctx, "注销登陆成功")
+}
+
+// 修改密码
+type UpdatePasswordRequest struct {
+	OldPassword string `json:"old_password" binding:"required"`
+	NewPassword string `json:"new_password" binding:"required"`
+}
+
+// UpdatePassword 修改密码
+func (a *AuthController) UpdatePassword(context *gin.Context) {
+	var input dto.ChangePasswordInput
+	if err := context.ShouldBindJSON(&input); err != nil {
+		log.Println("修改密码失败-参数校验:", err)
+		response.BadRequest(context, "修改密码失败-参数校验")
+		return
+	}
+	userid, exit := context.Get("user_id")
+	if !exit {
+		log.Println("修改密码失败-根据AUth中间件上下文获取用户ID失败")
+		response.Unauthorized(context, "修改密码失败")
+		return
+	}
+	input.UserID = userid.(string)
+	fmt.Println("上下文用户的id", userid)
+	log.Println("log上下文用户的id", userid)
+
+	//调用service去修改密码
+	err := a.userService.UpdatePassword(&input)
+	if err != nil {
+		log.Println("修改密码失败:", err)
+		response.InternalError(context, err.Error())
+		return
+	}
+
+	response.Success(context, "修改密码成功")
+
 }

@@ -57,7 +57,7 @@ func GetUsers() ([]User, error) {
 // GetUserById 根据ID获取用户
 func GetUserById(id uint) (*User, error) {
 	var user User
-	err := DB.Preload("Tenant").First(&user, id).Error
+	err := DB.First(&user, id).Error
 	return &user, err
 }
 

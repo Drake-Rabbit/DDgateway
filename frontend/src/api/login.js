@@ -18,3 +18,8 @@ export function logout() {
 export function getUserInfo() {
     return axios.post('/auth/userinfo')
 }
+
+//更新密码
+export function updatePassword(data) {
+    return axios.post('/auth/updatepassword', data)
+}

@@ -13,11 +13,16 @@ export const useUserStore = defineStore('user', () => {
   function setUserInfo(newUserinfo) {
     userinfo.value = newUserinfo
   }
+  //删除用户信息
+  function removeUserInfo() {
+    userinfo.value = {}
+  }
 
   // 返回要暴露的内容（必须显式 return）
   return {
     userinfo,
     setUserInfo,
+    removeUserInfo,
   }
 
 },
