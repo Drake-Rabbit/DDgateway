@@ -1,0 +1,16 @@
+<template>
+    <div>
+        <h1>AI分析</h1>
+    </div>
+</template>
+
+<script setup>
+import {useUserStore} from '~/store/user.js'
+const userstore = useUserStore()
+</script>
+
+<style scoped>
+    h1 {
+        @apply text-2xl font-bold text-gray-800;
+    }
+</style>
