@@ -62,7 +62,9 @@ const defaultActive =ref(route.path)
 
 
 // 处理菜单点击事件
-const handleSelect = (index) => {router.push(index)}
+const handleSelect = (index) => {
+  // console.log(index)
+  router.push(index)}
 </script>
 
 <style scoped>

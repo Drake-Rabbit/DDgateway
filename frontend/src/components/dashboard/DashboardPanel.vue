@@ -1,77 +1,74 @@
 <template>
-  <div class="dashboard-page">
+  <div class="dashboard-container" >
     <el-card class="card-panel">
       <template #header>
         <div class="card-header">
           <span>仪表盘概览</span>
         </div>
       </template>
-      <div class="panel-group">
-        <el-row :gutter="20" >
 
-          <!-- Service Card -->
-          <el-col :span="4" style="height: 10px;">
-            <el-card class="stat-card service-bg">
+      <div class="panel-group">
+        <el-row :gutter="20">
+          <el-col :span="6">
+            <el-card class="stat-card">
               <div class="stat-content">
                 <div class="stat-icon">
                   <i class="el-icon-s-data"></i>
                 </div>
                 <div class="stat-info">
-                  <div class="stat-value">{{ panelGroupData?.serviceNum || 0 }}</div>
+                  <div class="stat-value">{{ panelData?.serviceNum || 0 }}</div>
                   <div class="stat-label">服务总数</div>
                 </div>
               </div>
             </el-card>
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="6">
             <el-card class="stat-card">
               <div class="stat-content">
                 <div class="stat-icon">
                   <i class="el-icon-apple"></i>
                 </div>
                 <div class="stat-info">
-                  <div class="stat-value">{{panelGroupData?.appNum || 0}}</div>
+                  <div class="stat-value">{{ panelData?.appNum || 0 }}</div>
                   <div class="stat-label">应用总数</div>
                 </div>
               </div>
             </el-card>
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="6">
             <el-card class="stat-card">
               <div class="stat-content">
                 <div class="stat-icon">
                   <i class="el-icon-timer"></i>
                 </div>
                 <div class="stat-info">
-                  <div class="stat-value">{{panelGroupData?.todayReqNum || 0}}</div>
+                  <div class="stat-value">{{ panelData?.todayRequestNum || 0 }}</div>
                   <div class="stat-label">今日请求量</div>
                 </div>
               </div>
             </el-card>
           </el-col>
 
-          <el-col :span="4">
+          <el-col :span="6">
             <el-card class="stat-card">
               <div class="stat-content">
                 <div class="stat-icon">
                   <i class="el-icon-speedometer"></i>
                 </div>
                 <div class="stat-info">
-                  <div class="stat-value">{{panelGroupData?.todayQps || 0}}</div>
+                  <div class="stat-value">{{ panelData?.currentQPS || 0 }}</div>
                   <div class="stat-label">当前QPS</div>
                 </div>
               </div>
             </el-card>
           </el-col>
-         
-          <el-col :span="8">
-            <!-- 系统资源监控卡片 -->
-            <CpuMemoryChart />
-          </el-col>
+
+          
         </el-row>
       </div>
+
     </el-card>
 
     <el-row :gutter="20" class="chart-row">
@@ -82,11 +79,8 @@
               <span>流量统计</span>
             </div>
           </template>
-          <div class="chart-container">
-            <FlowChart/>
-          </div>
+          <FlowChart :data="flowData" />
         </el-card>
-
       </el-col>
       <el-col :span="12">
         <el-card class="chart-card">
@@ -95,9 +89,7 @@
               <span>服务类型分布</span>
             </div>
           </template>
-          <div class="chart-container">
-            <ServiceTypeChart/>
-          </div>
+          <ServiceTypeChart :data="serviceStatData" />
         </el-card>
       </el-col>
     </el-row>
@@ -105,28 +97,53 @@
 </template>
 
 <script setup>
-import { getPanelGroupData} from '~/api/dashboard.js'
-import  FlowChart  from '~/components/dashboard/FlowChart.vue'
-import  ServiceTypeChart  from '~/components/dashboard/ServiceTypeChart.vue'
-import CpuMemoryChart from '~/components/dashboard/CpuMemoryChart.vue'
 import { ref, onMounted } from 'vue'
+import { ElMessage } from 'element-plus'
+import FlowChart from './FlowChart.vue'
+import ServiceTypeChart from './ServiceTypeChart.vue'
+import { getPanelGroupData, getFlowStat, getServiceStat } from '~/api/dashboard'
 
-const panelGroupData = ref([])
-getPanelGroupData().then(res => {
-  panelGroupData.value = res.data.data
-  console.log("panelGroupData.value",panelGroupData.value)
+const panelData = ref(null)
+const flowData = ref({ today: [], yesterday: [] })
+const serviceStatData = ref([])
+
+const fetchPanelData = async () => {
+  try {
+    const response = await getPanelGroupData()
+    panelData.value = response.data
+  } catch (error) {
+    ElMessage.error('获取面板数据失败')
+  }
+}
+
+const fetchFlowStat = async () => {
+  try {
+    const response = await getFlowStat()
+    flowData.value = response.data
+  } catch (error) {
+    ElMessage.error('获取流量统计失败')
+  }
+}
+
+const fetchServiceStat = async () => {
+  try {
+    const response = await getServiceStat()
+    serviceStatData.value = response.data
+  } catch (error) {
+    ElMessage.error('获取服务统计失败')
+  }
+}
+
+onMounted(() => {
+  fetchPanelData()
+  fetchFlowStat()
+  fetchServiceStat()
 })
 </script>
 
 <style scoped>
-.dashboard-page {
-  padding: 0px;
-}
-.el-card__body {
-  padding: 12px 0; /* 原默认是 20px，现在上下更紧凑 */
-}
-.el-card {
-  min-height: auto;
+.dashboard-container {
+  padding: 20px;
 }
 
 .card-panel {
@@ -137,59 +154,43 @@ getPanelGroupData().then(res => {
   margin-top: 20px;
 }
 
-.panel-group .stat-card {
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.06);
-  transition: all 0.3s ease;
+.stat-card {
   text-align: center;
-  padding: 14px 0; /* 原为 20px，缩小 */
+  transition: all 0.3s;
 }
 
-.panel-group .stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+.stat-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* 服务总数 - 天蓝 */
-.panel-group .el-col:nth-child(1) .stat-card {
-  background-color: #00BFFF;
-  color: white;
+.stat-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 0;
 }
 
-/* 应用总数 - 淡蓝 */
-.panel-group .el-col:nth-child(2) .stat-card {
-  background-color: #87CEEB;
-  color: #2C3E50;
-}
-
-/* 今日请求量 - 金色 */
-.panel-group .el-col:nth-child(3) .stat-card {
-  background-color: #FFD700;
-  color: #2C3E50;
-}
-
-/* 当前QPS - 橙色 */
-.panel-group .el-col:nth-child(4) .stat-card {
-  background-color: #FFA500;
-  color: white;
-}
-
-.panel-group .stat-icon i {
+.stat-icon {
   font-size: 28px;
-  margin-right: 0px;
-  color: inherit; /* 继承父元素颜色 */
+  color: #409EFF;
+  margin-right: 15px;
 }
 
-.panel-group .stat-value {
+.stat-info {
+  text-align: left;
+}
+
+.stat-value {
   font-size: 24px;
   font-weight: bold;
-  margin-bottom: 4px;
+  color: #303133;
+  margin-bottom: 5px;
 }
 
-.panel-group .stat-label {
+.stat-label {
   font-size: 14px;
-  opacity: 0.9;
+  color: #909399;
 }
 
 .chart-row {
@@ -200,13 +201,8 @@ getPanelGroupData().then(res => {
   height: 400px;
 }
 
-.chart-container {
-  width: 100%;
-  height: 100%;
+.dashboard-container {
+  padding: 0px;
+  @apply w-full h-full ;
 }
-
-:deep(.el-card__body) {
-  padding: 10px;
-}
-
 </style>
