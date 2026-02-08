@@ -7,7 +7,6 @@
       </el-tab-pane>
     </el-tabs>
   </div>
-  <div style="height: 8px;"></div>
 </template>
 
 
