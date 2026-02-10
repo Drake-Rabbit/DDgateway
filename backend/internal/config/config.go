@@ -1,6 +1,8 @@
 package config
 
 import (
+	"fmt"
+	"github.com/spf13/viper"
 	"os"
 	"strconv"
 
@@ -30,6 +32,7 @@ type JWTConfig struct {
 	ExpireHours int
 }
 
+// Load .env file
 func Load() *Config {
 	// Load .env file
 	godotenv.Load()
@@ -70,4 +73,17 @@ func getEnvInt(key string, defaultValue int) int {
 		return defaultValue
 	}
 	return intValue
+}
+
+// 加载代理配置
+func InitViperConfig() {
+	viper.SetConfigName("proxy") // 配置文件名（不带扩展名）
+	viper.SetConfigType("toml")  // 显式指定格式为 TOML
+	viper.AddConfigPath("./")    // 搜索路径
+
+	// 读取配置文件
+	if err := viper.ReadInConfig(); err != nil {
+		panic(fmt.Errorf("无法读取配置文件: %w", err))
+	}
+	fmt.Println("配置文件已加载:", viper.ConfigFileUsed())
 }

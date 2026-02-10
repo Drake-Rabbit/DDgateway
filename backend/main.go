@@ -3,14 +3,19 @@ package main
 import (
 	"gateway-service/internal/config"
 	"gateway-service/internal/database"
+	"gateway-service/internal/http_proxy_router"
 	"gateway-service/internal/models"
 	"gateway-service/internal/router"
 	"log"
+	"os"
+	"os/signal"
+	"syscall"
 )
 
 func main() {
 	// 加载配置
 	cfg := config.Load()
+	config.InitViperConfig()
 
 	// 初始化数据库
 	db, err := database.InitDB(cfg)
@@ -21,13 +26,28 @@ func main() {
 	// 设置全局 DB
 	models.SetDB(db)
 
-	// 设置路由
+	// 后台dashboard设置路由
 	r := router.SetupRouter(cfg)
 
-	// 启动服务器
-	addr := ":" + cfg.Server.Port
-	log.Printf("Server starting on %s", addr)
-	if err := r.Run(addr); err != nil {
-		log.Fatal("Failed to start server:", err)
-	}
+	// 启动admin_dashboard管理面板
+	go func() {
+		addr := ":" + cfg.Server.Port
+		log.Printf("Server starting on %s", addr)
+		if err := r.Run(addr); err != nil {
+			log.Fatal("Failed to start server:", err)
+		}
+	}()
+
+	//启动代理服务器
+	go func() {
+		http_proxy_router.HttpServerRun()
+	}()
+
+	//监听信号
+	quit := make(chan os.Signal)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+
+	//停止代理服务器
+	http_proxy_router.HttpServerStop()
 }
