@@ -1,5 +1,10 @@
 package models
 
+import (
+	"gateway-service/internal/dto"
+	"sync"
+)
+
 // ServiceDetail 服务详情结构体
 type ServiceDetail struct {
 	Info          *ServiceInfo   `json:"info"`
@@ -54,7 +59,59 @@ func GetServiceDetailById(serviceID uint) (*ServiceDetail, error) {
 	return detail, nil
 }
 
-////服务详情是否存在count
-//func IsServiceDetail(serviceID uint)  error{
-//	return DB.Model(&ServiceDetail{}).Where("service_id = ?", serviceID).Count(&ServiceDetail{}).Error
-//}
+// ServiceManagerHandler 服务管理实例
+var serviceManagerHandler *ServiceManager
+
+func init() {
+	serviceManagerHandler = NewServiceManager()
+}
+
+// ServiceManager 服务管理结构体
+type ServiceManager struct {
+	ServiceMap   map[string]*ServiceDetail
+	ServiceSlice []*ServiceDetail
+	Locker       sync.RWMutex
+	init         sync.Once
+	err          error
+}
+
+func NewServiceManager() *ServiceManager {
+	sm := &ServiceManager{
+		ServiceMap:   make(map[string]*ServiceDetail),
+		ServiceSlice: []*ServiceDetail{},
+		Locker:       sync.RWMutex{},
+		init:         sync.Once{},
+	}
+	return sm
+}
+
+// 一次性加载服务配置信息,放在内存中
+func (sm *ServiceManager) LoadOnce() error {
+
+	sm.init.Do(func() {
+
+		//1.db中获取service配置信息
+		params := &dto.ServiceListInput{PageNo: 1, PageSize: 99999}
+		list, _, err := GetServicePage(params)
+		if err != nil {
+			sm.err = err
+			return
+		}
+		sm.Locker.Lock()
+		defer sm.Locker.Unlock()
+		//2.遍历service,配置详情信息存储在map中
+		for _, listItem := range list {
+			serviceDetail, err := GetServiceDetailById(listItem.ID)
+			//fmt.Println("serviceDetail")
+			//fmt.Println(public.Obj2Json(serviceDetail))
+			if err != nil {
+				sm.err = err
+				return
+			}
+			sm.ServiceMap[listItem.ServiceName] = serviceDetail
+			sm.ServiceSlice = append(sm.ServiceSlice, serviceDetail)
+		}
+	})
+
+	return sm.err
+}
