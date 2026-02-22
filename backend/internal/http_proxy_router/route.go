@@ -1,6 +1,9 @@
 package http_proxy_router
 
-import "github.com/gin-gonic/gin"
+import (
+	"gateway-service/internal/http_proxy_middleware"
+	"github.com/gin-gonic/gin"
+)
 
 func InitRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 	//router := gin.Default()
@@ -11,6 +14,11 @@ func InitRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 			"message": "pong",
 		})
 	})
+
+	//测试
+	router.Use(
+		http_proxy_middleware.HTTPAccessModeMiddleware(),
+	)
 
 	//oauth := router.Group("/oauth")
 	//oauth.Use(middleware.TranslationMiddleware())

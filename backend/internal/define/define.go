@@ -1,5 +1,7 @@
 package define
 
+import "encoding/json"
+
 var (
 	//// 密钥
 	//Jwtkey = "d_gateway"
@@ -56,4 +58,9 @@ func DefaultPageNum(inputPageNo, inputPageSize int) (outpageNo, outPageSize int)
 	}
 
 	return pageNo, pageSize
+}
+
+func ObjToJson(s interface{}) string {
+	bts, _ := json.Marshal(s)
+	return string(bts)
 }

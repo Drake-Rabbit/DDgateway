@@ -1,7 +1,11 @@
 package models
 
 import (
+	"errors"
+	"gateway-service/internal/define"
 	"gateway-service/internal/dto"
+	"github.com/gin-gonic/gin"
+	"strings"
 	"sync"
 )
 
@@ -60,10 +64,10 @@ func GetServiceDetailById(serviceID uint) (*ServiceDetail, error) {
 }
 
 // ServiceManagerHandler 服务管理实例
-var serviceManagerHandler *ServiceManager
+var ServiceManagerHandler *ServiceManager
 
 func init() {
-	serviceManagerHandler = NewServiceManager()
+	ServiceManagerHandler = NewServiceManager()
 }
 
 // ServiceManager 服务管理结构体
@@ -114,4 +118,33 @@ func (sm *ServiceManager) LoadOnce() error {
 	})
 
 	return sm.err
+}
+
+func (s *ServiceManager) HTTPAccessMode(c *gin.Context) (*ServiceDetail, error) {
+	//1、前缀匹配 /abc ==> serviceSlice.rule
+	//2、域名匹配 www.test.com ==> serviceSlice.rule
+	//host c.Request.Host
+	//path c.Request.URL.Path
+	host := c.Request.Host
+	host = host[0:strings.Index(host, ":")]
+	path := c.Request.URL.Path
+	for _, serviceItem := range s.ServiceSlice {
+		//仅支持HTTP
+		if serviceItem.Info.LoadType != define.LoadTypeHTTP {
+			continue
+		}
+		//如果http请求是域名匹配
+		if serviceItem.HTTPRule.RuleType == define.HTTPRuleTypeDomain {
+			if serviceItem.HTTPRule.Rule == host {
+				return serviceItem, nil
+			}
+		}
+		//如果http请求是前缀匹配
+		if serviceItem.HTTPRule.RuleType == define.HTTPRuleTypePrefixURL {
+			if strings.HasPrefix(path, serviceItem.HTTPRule.Rule) {
+				return serviceItem, nil
+			}
+		}
+	}
+	return nil, errors.New("not matched service")
 }

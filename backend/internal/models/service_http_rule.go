@@ -4,7 +4,7 @@ package models
 type HttpRule struct {
 	ID             int64  `gorm:"primary_key" json:"id"`
 	ServiceID      int64  `gorm:"column:service_id" json:"service_id"`
-	RuleType       int    `gorm:"column:rule_type" json:"rule_type"`
+	RuleType       int    `gorm:"column:rule_type" json:"rule_type" description:"匹配类型 domain=域名, url_prefix=url前缀"`
 	Rule           string `gorm:"column:rule" json:"rule"`
 	NeedHttps      int    `gorm:"column:need_https" json:"need_https"`
 	NeedWebsocket  int    `gorm:"column:need_websocket" json:"need_websocket"`

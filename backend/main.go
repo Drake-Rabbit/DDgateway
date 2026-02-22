@@ -39,6 +39,11 @@ func main() {
 	}()
 
 	//启动代理服务器
+	err = models.ServiceManagerHandler.LoadOnce()
+	if err != nil {
+		log.Fatal("Failed to load service manager:", err)
+	}
+
 	go func() {
 		http_proxy_router.HttpServerRun()
 	}()
