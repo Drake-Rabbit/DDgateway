@@ -64,6 +64,6 @@ testdata/
 *.rej
 
 #
-*.json
+*test*.json
 test.go
 .exe

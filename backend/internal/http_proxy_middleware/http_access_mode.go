@@ -12,7 +12,7 @@ import (
 // 匹配接入方式 基于请求信息
 func HTTPAccessModeMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		//
+		//确定这个http请求的service的detail
 		s, err := models.ServiceManagerHandler.HTTPAccessMode(c)
 		if err != nil {
 			response.Error(c, err.Error())

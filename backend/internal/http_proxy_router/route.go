@@ -18,6 +18,7 @@ func InitRouter(middlewares ...gin.HandlerFunc) *gin.Engine {
 	//测试
 	router.Use(
 		http_proxy_middleware.HTTPAccessModeMiddleware(),
+		http_proxy_middleware.HTTPReverseProxyMiddleware(),
 	)
 
 	//oauth := router.Group("/oauth")

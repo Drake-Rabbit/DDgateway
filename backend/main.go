@@ -17,7 +17,7 @@ func main() {
 	cfg := config.Load()
 	config.InitViperConfig()
 
-	// 初始化数据库
+	// 初始化mysql数据库
 	db, err := database.InitDB(cfg)
 	if err != nil {
 		log.Fatal("Failed to connect to database:", err)
@@ -25,6 +25,12 @@ func main() {
 
 	// 设置全局 DB
 	models.SetDB(db)
+
+	//初始化redis
+	err = database.InitRedisClient()
+	if err != nil {
+		log.Fatal("Failed to connect to redis:", err)
+	}
 
 	// 后台dashboard设置路由
 	r := router.SetupRouter(cfg)

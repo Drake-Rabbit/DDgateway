@@ -50,9 +50,9 @@ func (c *ServiceController) ListServices(ctx *gin.Context) {
 		//1、http后缀接入 clusterIP+clusterPort+path
 		//2、http域名接入 domain
 		//3、tcp、grpc接入 clusterIP+servicePort
-		serviceAddr := "unknow"
-		clusterIP := os.Getenv("cluster_ip")
-		clusterPort := os.Getenv("cluster_port")
+		serviceAddr := "unknown"
+		clusterIP := os.Getenv("proxy_ip")
+		clusterPort := os.Getenv("proxy_port")
 		clusterSSLPort := os.Getenv("cluster_ssl_port")
 
 		//
