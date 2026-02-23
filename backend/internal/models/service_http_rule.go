@@ -3,14 +3,14 @@ package models
 // HttpRule HTTP规则结构体
 type HttpRule struct {
 	ID             int64  `gorm:"primary_key" json:"id"`
-	ServiceID      int64  `gorm:"column:service_id" json:"service_id"`
+	ServiceID      int64  `gorm:"column:service_id" json:"service_id" description:"服务id"`
 	RuleType       int    `gorm:"column:rule_type" json:"rule_type" description:"匹配类型 domain=域名, url_prefix=url前缀"`
-	Rule           string `gorm:"column:rule" json:"rule"`
-	NeedHttps      int    `gorm:"column:need_https" json:"need_https"`
-	NeedWebsocket  int    `gorm:"column:need_websocket" json:"need_websocket"`
-	NeedStripUri   int    `gorm:"column:need_strip_uri" json:"need_strip_uri"`
-	UrlRewrite     string `gorm:"column:url_rewrite" json:"url_rewrite"`
-	HeaderTransfor string `gorm:"column:header_transfor" json:"header_transfor"`
+	Rule           string `gorm:"column:rule" json:"rule" description:"type=domain表示域名，type=url_prefix时表示url前缀"`
+	NeedHttps      int    `gorm:"column:need_https" json:"need_https" description:"type=支持https 1=支持"`
+	NeedWebsocket  int    `gorm:"column:need_websocket" json:"need_websocket" description:"启用websocket 1=启用"`
+	NeedStripUri   int    `gorm:"column:need_strip_uri" json:"need_strip_uri" description:"启用strip_uri 1=启用"`
+	UrlRewrite     string `gorm:"column:url_rewrite" json:"url_rewrite" description:"url重写功能，每行一个	"`
+	HeaderTransfor string `gorm:"column:header_transfor" json:"header_transfor" description:"header转换支持增加(add)、删除(del)、修改(edit) 格式: add headname headvalue	"`
 }
 
 // TableName 设置表名
